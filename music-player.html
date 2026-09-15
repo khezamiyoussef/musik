@@ -7,8 +7,9 @@
   MUSIC PLAYER  ·  one self-contained file, played through YouTube
   ============================================================================
   Every song plays through YouTube's official embedded player. Nothing here
-  is downloaded, ripped or extracted; YouTube serves the video, its ads and
-  its consent dialogs exactly as on youtube.com.
+  is downloaded, ripped or extracted; YouTube streams the content and its ads
+  exactly as on youtube.com. In the default "audio" view the player itself is
+  off screen (see LOOK below); switch to "compact" or "video" to show it.
 
   HOW TO OPEN
   ----------------------------------------------------------------------------
@@ -48,15 +49,46 @@
      An editor appears under the player. Paste any YouTube link or ID to
      add a song, move songs with the arrows, remove with the cross, and type
      titles directly into the list. The draft is kept in THIS browser's
-     localStorage, so nothing is lost while you edit. When you're happy,
-     click "Export playlist as HTML": the browser downloads a fresh copy of
-     this very file with your playlist written into the PLAYLIST array.
-     Send that file on; it plays without #youssef and shows no editor.
+     localStorage, so nothing is lost while you edit, but the normal view
+     (without #youssef) always shows what is in the FILE. To make changes
+     stick, save:
+       - "Save to file"    writes this very file on disk with the playlist
+                           baked in (Chrome/Edge ask you to pick the file
+                           once; other browsers download a copy instead).
+       - "Save to website" commits the file into your GitHub repository, so
+                           the GitHub Pages address updates for everyone.
+                           Fill in "Website settings" once (repository,
+                           branch, a fine-grained token limited to that one
+                           repository). Stored only in your browser.
+       - "Download a copy" just downloads the file, e.g. to send by e-mail.
+
+     "Add several at once" takes a whole list, one song per line. To have
+     plain names ("Billy Ocean - Stay the Night") looked up automatically,
+     give curator mode a YouTube Data API key. It is free, stored only in
+     your browser's localStorage and NEVER written into this file or the
+     exported copy. To get one (about 5 minutes):
+       1. https://console.cloud.google.com  ->  create a project.
+       2. "APIs & Services" -> "Library" -> enable "YouTube Data API v3".
+       3. "Credentials" -> "Create credentials" -> "API key".
+       4. Edit the key -> restrict it to "YouTube Data API v3" and, once the
+          player is hosted, to your site's address under "Websites".
+     The free quota allows roughly 100 song look-ups per day.
 
      NOTE: #youssef is NOT a security feature and is not meant to be one.
      Anyone holding this file can add the hash and see the editor; that is
      harmless, because the editor only changes their own local copy. It is
      purely a convenience toggle that keeps the ordinary view clean.
+
+  LOOK
+  ----------------------------------------------------------------------------
+  SETTINGS.layout (just below) chooses the view:
+    "audio"   (default) shows only an artwork disc, the song name and the
+              controls. The YouTube player is still in the page and does the
+              playing, but it sits off screen. Be aware: YouTube's API terms
+              ask for the player to stay visible (at least 200 x 200 px), so
+              this view is the owner's deliberate choice, not the compliant one.
+    "compact" shows YouTube's player as a small tile next to the song name.
+    "video"   shows YouTube's player large. Both keep the player visible.
 
   SECURITY NOTES
   ----------------------------------------------------------------------------
@@ -66,15 +98,16 @@
   - Pasted links are parsed with the URL API and accepted only if they come
     from a YouTube host and yield a valid 11-character video ID.
   - The only remote script is https://www.youtube.com/iframe_api; the
-    Content-Security-Policy below refuses every other script, frame and
-    network destination.
+    Content-Security-Policy below refuses every other script and frame. The
+    only network call the page itself may make is to Google's official
+    YouTube Data API (look-ups in curator mode, only with your own key).
   ============================================================================
 -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; style-src 'unsafe-inline'; img-src data:; connect-src https://www.googleapis.com https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="color-scheme" content="light dark">
-<title>Music</title>
+<title>It is much better to arrive late than not at all 😂</title>
 
 <script>
 // ==== PLAYLIST START ====
@@ -112,12 +145,27 @@ const PLAYLIST = [
   { title: "Silent Circle – Stop the Rain in the Night", videoId: "x245r8-D_eY" },
   { title: "Tears for Fears – Everybody Wants to Rule the World", videoId: "aGCdLKXNF3w" },
   { title: "Sade – Smooth Operator", videoId: "4TYv2PhG89A" },
+  { title: "The Night Is My World — Self Control (Raf / Laura Branigan)", videoId: "FQD0yGuZ2N8" },
+  { title: "Don't Lose Your Heart Tonight — Silent Circle", videoId: "c7GaR4chf0U" },
+  { title: "I'm a Tiger", videoId: "htziQt0pCAQ" },
+  { title: "Don't Stop", videoId: "0hGhl7ki3HM" },
+  { title: "Heartbreak", videoId: "lKcy4hLvzgI" },
+  { title: "Touching The Night — Silent Circle", videoId: "3-nTXUUKCro" },
+  { title: "The Beat Goes On", videoId: "0MQ4G821kcw" },
+  { title: "Stop The Rain — Silent Circle", videoId: "1uSdKUMEuO8" },
 ];
 // ==== PLAYLIST END ====
 
+// Look of the player.
+//   "audio"   - no video on screen: artwork disc, song name and controls only (the YouTube player
+//               still exists for playback, but off screen; see the LOOK note above).
+//   "compact" - YouTube's player as a small tile beside the song title.
+//   "video"   - YouTube's player large, above the title.
+const SETTINGS = { layout: "audio" };
+
 // Words she sees on screen. Translate here if you like (e.g. into German).
 const STRINGS = {
-  brand: "Music",
+  brand: "It is much better to arrive late than not at all 😂",
   songs: "Songs",
   hint: "Press play to begin",
   untitled: "Untitled",
@@ -189,11 +237,15 @@ const STRINGS = {
   }
   .brand {
     font-family: var(--serif);
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    font-size: .78rem;
+    font-style: italic;
+    font-size: clamp(1.05rem, 2.6vw, 1.3rem);
+    line-height: 1.4;
     color: var(--muted);
+    text-wrap: balance;
+    text-align: center;
+    max-width: 34em;
   }
+  .top { flex-direction: column; justify-content: center; align-items: center; gap: 12px; margin-bottom: 36px; }
   .badge {
     font-size: .7rem;
     letter-spacing: .08em;
@@ -221,10 +273,9 @@ const STRINGS = {
     border: 0;
   }
   .video-note {
-    position: absolute;
-    left: 12px; right: 12px; bottom: 12px;
-    background: rgba(0, 0, 0, .74);
-    color: #fff;
+    margin-top: 16px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--ink);
     padding: 10px 14px;
     border-radius: 12px;
     font-size: .9rem;
@@ -232,6 +283,54 @@ const STRINGS = {
   }
 
   .now { text-align: center; margin-top: 36px; }
+
+  /* Audio layout: the YouTube player is kept for playback but placed off screen; a disc stands in. */
+  .art { display: none; }
+  .audio .hero { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+  .audio .video {
+    position: absolute;
+    left: -10000px; top: 0;
+    width: 200px; height: 200px;
+    aspect-ratio: auto;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: none;
+  }
+  .audio .art {
+    display: grid;
+    place-items: center;
+    width: min(56vw, 220px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, var(--card) 0 12%, transparent 12.5%),
+      repeating-radial-gradient(circle at 50% 50%, #1b1715 0 2px, #2a2422 2px 4px);
+    box-shadow: var(--shadow), inset 0 0 0 1px rgba(255, 255, 255, .06);
+    animation: spin 8s linear infinite;
+    animation-play-state: paused;
+  }
+  .audio .art i {
+    display: block;
+    width: 34%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--accent) 80%, #fff), var(--accent) 60%, color-mix(in srgb, var(--accent) 70%, #000));
+    box-shadow: 0 0 0 4px var(--card);
+  }
+  .playing .audio .art, .audio.playing .art { animation-play-state: running; }
+  .audio .now { margin-top: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Compact layout: the YouTube player becomes a small tile beside the title. */
+  .compact .hero { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+  .compact .video { width: min(100%, 340px); border-radius: 18px; }
+  .compact .now { margin-top: 0; }
+  @media (min-width: 640px) {
+    .compact .hero { flex-direction: row; align-items: center; gap: 32px; }
+    .compact .video { flex: none; width: 320px; }
+    .compact .now { text-align: left; flex: 1; min-width: 0; }
+    .compact .title { font-size: clamp(1.5rem, 3.6vw, 2.1rem); }
+  }
   .title {
     font-family: var(--serif);
     font-weight: 400;
@@ -360,7 +459,17 @@ const STRINGS = {
     padding: 0;
     border-top: 1px solid var(--line);
   }
-  .songs li { border-bottom: 1px solid var(--line); }
+  .songs li { border-bottom: 1px solid var(--line); position: relative; }
+  /* Thin progress line under the song that is playing, plus a small animated level meter. */
+  .songs .rowbar { position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--track); border-radius: 1px; overflow: hidden; }
+  .songs .rowbar i { display: block; height: 100%; width: var(--p, 0%); background: var(--accent); transition: width .25s linear; }
+  .songs .eq { display: none; width: 2.2ch; flex: none; height: 14px; align-items: flex-end; gap: 2px; align-self: center; }
+  .songs .eq i { display: block; width: 3px; height: 100%; background: var(--accent); border-radius: 1px; transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
+  .songs .eq i:nth-child(2) { animation-delay: -.35s; }
+  .songs .eq i:nth-child(3) { animation-delay: -.7s; }
+  .playing .songs li.current .eq { display: flex; }
+  .playing .songs li.current .n { display: none; }
+  @keyframes eq { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
   .songs button {
     display: flex;
     width: 100%;
@@ -452,6 +561,27 @@ const STRINGS = {
   }
   .curator textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
   .inline { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-top: 10px; }
+  .keybox { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 8px; }
+  .keybox input { flex: 1; min-width: 220px; }
+  .curator input[type=password] {
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: .9rem;
+  }
+  .curator input[type=password]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .lead.small { font-size: .8rem; }
+  #saveMsg { margin: 10px 0 0; min-height: 1.3em; }
+  .ghbox { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .ghbox summary { cursor: pointer; font-size: .9rem; color: var(--muted); }
+  .ghbox summary:hover { color: var(--ink); }
+  .ghbox .lead { margin-top: 10px; }
+  .ghgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; }
+  .ghgrid .msg { grid-column: 1 / -1; }
+  @media (max-width: 600px) { .ghgrid { grid-template-columns: 1fr; } }
   .msg { font-size: .85rem; color: var(--muted); }
   .row.pending { background: color-mix(in srgb, var(--accent) 7%, transparent); border-radius: 12px; padding-left: 8px; padding-right: 8px; }
   .row .fix { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
@@ -521,20 +651,22 @@ const STRINGS = {
 <body>
 <main class="app">
   <header class="top">
-    <span class="brand" id="brand">Music</span>
+    <span class="brand" id="brand">It is much better to arrive late than not at all 😂</span>
     <span class="badge" id="curatorBadge" hidden>Curator mode</span>
   </header>
 
   <section class="stage">
-    <div class="video">
-      <div id="yt"></div>
-      <div class="video-note" id="videoNote" role="status" aria-live="polite" hidden></div>
+    <div class="hero">
+      <div class="video">
+        <div id="yt"></div>
+      </div>
+      <div class="art" aria-hidden="true"><i></i></div>
+      <div class="now" id="now">
+        <h1 class="title" id="songTitle">—</h1>
+        <p class="artist" id="songArtist"></p>
+      </div>
     </div>
-
-    <div class="now" id="now">
-      <h1 class="title" id="songTitle">—</h1>
-      <p class="artist" id="songArtist"></p>
-    </div>
+    <div class="video-note" id="videoNote" role="status" aria-live="polite" hidden></div>
 
     <div class="seek">
       <input type="range" id="seek" min="0" max="1000" step="1" value="0" aria-label="Position" disabled>
@@ -576,7 +708,13 @@ const STRINGS = {
     <p class="err" id="addErr" role="alert"></p>
     <div class="bulk">
       <h3>Add several at once</h3>
-      <p class="lead">One song per line. A line can be just &ldquo;Artist &ndash; Title&rdquo;, a YouTube link, or a title and a link separated by &ldquo;|&rdquo;. Lines without a link are kept as &ldquo;needs a link&rdquo;: use &ldquo;Search on YouTube&rdquo; next to them, then paste the link back into that row.</p>
+      <p class="lead">One song per line. A line can be just &ldquo;Artist &ndash; Title&rdquo;, a YouTube link, or a title and a link separated by &ldquo;|&rdquo;. With an API key (below) plain names are looked up on YouTube automatically; without one they are kept as &ldquo;needs a link&rdquo; with a &ldquo;Search on YouTube&rdquo; button in the row.</p>
+      <div class="keybox">
+        <input type="password" id="apiKey" placeholder="YouTube Data API key (optional)" autocomplete="off" spellcheck="false" aria-label="YouTube Data API key">
+        <button class="btn" type="button" id="apiKeySave">Save key</button>
+        <span class="msg" id="apiKeyMsg" role="status"></span>
+      </div>
+      <p class="lead small">The key is Google's official, free YouTube Data API key (roughly 100 look-ups a day). It is stored only in this browser and is never written into the exported file. How to get one is explained in the comment at the top of this file.</p>
       <textarea id="bulkText" spellcheck="false" placeholder="Billy Ocean - Stay the Night&#10;Kool &amp; the Gang - Fresh | https://youtu.be/xxxxxxxxxxx&#10;https://www.youtube.com/watch?v=xxxxxxxxxxx"></textarea>
       <div class="inline">
         <button class="btn primary" type="button" id="bulkAdd">Add all lines</button>
@@ -585,10 +723,28 @@ const STRINGS = {
     </div>
     <ol class="rows" id="rows"></ol>
     <div class="actions">
-      <button class="btn primary" type="button" id="exportBtn">Export playlist as HTML</button>
-      <button class="btn" type="button" id="resetBtn">Discard draft, reload file's playlist</button>
+      <button class="btn primary" type="button" id="saveFileBtn">Save to file</button>
+      <button class="btn primary" type="button" id="saveWebBtn" hidden>Save to website</button>
+      <button class="btn" type="button" id="exportBtn">Download a copy</button>
+      <button class="btn" type="button" id="shuffleBtn" title="Put the songs in a random order">🔀 Shuffle order</button>
+      <button class="btn" type="button" id="dedupeBtn" hidden>Remove duplicates</button>
+      <button class="btn" type="button" id="resolveBtn" hidden>Find links for songs without one</button>
+      <button class="btn" type="button" id="resetBtn">Discard draft</button>
       <span class="status" id="draftStatus"></span>
     </div>
+    <p class="msg" id="saveMsg" role="status"></p>
+    <details class="ghbox">
+      <summary>Website settings (GitHub Pages)</summary>
+      <p class="lead small">Lets &ldquo;Save to website&rdquo; write this file straight into your GitHub repository; GitHub Pages then updates within a minute or two. Create a fine-grained token at github.com/settings/personal-access-tokens with access to just this repository and &ldquo;Contents: Read and write&rdquo;. Everything here is stored only in this browser, never in the file.</p>
+      <div class="ghgrid">
+        <input type="text" id="ghRepo" placeholder="owner/repository, e.g. youssef/musik" autocomplete="off" spellcheck="false" aria-label="GitHub repository">
+        <input type="text" id="ghPath" placeholder="File path in the repository" autocomplete="off" spellcheck="false" aria-label="File path">
+        <input type="text" id="ghBranch" placeholder="Branch (main)" autocomplete="off" spellcheck="false" aria-label="Branch">
+        <input type="password" id="ghToken" placeholder="GitHub token" autocomplete="off" spellcheck="false" aria-label="GitHub token">
+        <button class="btn" type="button" id="ghSave">Save settings</button>
+        <span class="msg" id="ghMsg" role="status"></span>
+      </div>
+    </details>
   </section>
 
   <footer id="footer"></footer>
@@ -599,7 +755,7 @@ const STRINGS = {
   'use strict';
 
   // Snapshot of this file's own markup, taken before anything below touches the DOM.
-  // "Export playlist as HTML" writes the current playlist into this snapshot.
+  // Save / Download write the current playlist into this snapshot.
   const SOURCE_SNAPSHOT = serializeDocument();
 
   const ID_RE = /^[A-Za-z0-9_-]{11}$/;
@@ -619,6 +775,7 @@ const STRINGS = {
   let meta = null;       // { video_id, title, author } from the player
   let errorStreak = 0;
   let playerCreated = false;
+  let resolving = false;  // a YouTube look-up run is in progress
 
   const $ = (id) => document.getElementById(id);
 
@@ -710,6 +867,89 @@ const STRINGS = {
     return FILE_LIST.map((s) => ({ title: s.title, videoId: s.videoId }));
   }
 
+  // Optional YouTube Data API key for automatic look-ups. Lives only in this browser's localStorage;
+  // it is never part of the page markup, so the exported file never contains it.
+  const KEY_STORE = 'yt-music-player.apikey';
+  const KEY_RE = /^[A-Za-z0-9_-]{20,100}$/;
+  function getApiKey() {
+    try { const k = localStorage.getItem(KEY_STORE) || ''; return KEY_RE.test(k) ? k : ''; } catch (e) { return ''; }
+  }
+  function setApiKey(k) {
+    try { if (k) localStorage.setItem(KEY_STORE, k); else localStorage.removeItem(KEY_STORE); } catch (e) { /* ignore */ }
+  }
+
+  // Ask YouTube's official Data API for the best video for a song name. Returns an ID or null.
+  async function searchYouTube(query, key) {
+    const url = new URL('https://www.googleapis.com/youtube/v3/search');
+    url.searchParams.set('part', 'snippet');
+    url.searchParams.set('type', 'video');
+    url.searchParams.set('videoEmbeddable', 'true');
+    url.searchParams.set('videoSyndicated', 'true');
+    url.searchParams.set('maxResults', '5');
+    url.searchParams.set('q', query);
+    url.searchParams.set('key', key);
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      let reason = '';
+      try { const j = await res.json(); reason = (j && j.error && j.error.errors && j.error.errors[0] && j.error.errors[0].reason) || ''; } catch (e) { /* no JSON */ }
+      const text = reason === 'quotaExceeded' ? 'Daily look-up limit reached; try again tomorrow'
+        : reason === 'accessNotConfigured' ? 'YouTube Data API v3 is not enabled for this key'
+        : (res.status === 400 || res.status === 403) ? 'The API key was rejected (' + (reason || res.status) + ')'
+        : 'YouTube look-up failed (' + res.status + ')';
+      const err = new Error(text);
+      err.fatal = true;   // no point trying the remaining songs
+      throw err;
+    }
+    const data = await res.json();
+    const items = Array.isArray(data && data.items) ? data.items : [];
+    const cands = items.map((it) => ({
+      id: it && it.id ? String(it.id.videoId || '') : '',
+      channel: String((it && it.snippet && it.snippet.channelTitle) || ''),
+      title: String((it && it.snippet && it.snippet.title) || '')
+    })).filter((c) => ID_RE.test(c.id));
+    if (!cands.length) return null;
+    // Prefer official uploads; push live versions, covers and remixes down.
+    const score = (c) => (/vevo|- topic$/i.test(c.channel) ? 3 : 0)
+      + (/official/i.test(c.title) ? 2 : 0)
+      + (/\b(live|cover|karaoke|remix|slowed|reverb|8d|reaction|tutorial)\b/i.test(c.title) ? -3 : 0);
+    cands.sort((a, b) => score(b) - score(a));
+    return cands[0].id;
+  }
+
+  // Look up every draft entry that still has no video, one after another.
+  async function resolvePending() {
+    const key = getApiKey();
+    if (!key || resolving) return;
+    const todo = list.filter((s) => !isPlayable(s) && s.title);
+    if (!todo.length) return;
+    resolving = true;
+    $('resolveBtn').disabled = true;
+    let found = 0, missed = 0, stop = '';
+    for (let k = 0; k < todo.length; k++) {
+      const song = todo[k];
+      if (!list.includes(song) || isPlayable(song)) continue;   // removed or fixed meanwhile
+      $('bulkMsg').textContent = 'Looking up ' + (k + 1) + ' of ' + todo.length + ': ' + song.title;
+      try {
+        const id = await searchYouTube(song.title, key);
+        if (id && !list.some((s) => s.videoId === id)) { song.videoId = id; found += 1; }
+        else missed += 1;
+      } catch (err) {
+        if (err && err.fatal) { stop = err.message; break; }
+        missed += 1;
+      }
+      saveDraft();
+      renderAll();
+    }
+    resolving = false;
+    $('resolveBtn').disabled = false;
+    const parts = ['Found ' + found + (found === 1 ? ' song' : ' songs') + ' on YouTube'];
+    if (missed) parts.push(missed + ' not found (use “Search on YouTube” in the row)');
+    if (stop) parts.push(stop);
+    $('bulkMsg').textContent = parts.join(' · ') + '.';
+    if (playableCount() && !isPlayable(currentSong())) goTo(index, false, 1);
+    renderAll();
+  }
+
   // ---------- formatting ----------
   function fmt(seconds) {
     const s = Math.max(0, Math.floor(seconds || 0));
@@ -756,11 +996,14 @@ const STRINGS = {
       if (!isPlayable(song)) return;   // songs still waiting for a link are not shown to the listener
       n += 1;
       const label = song.title || (i === index && metaMatches(song) && meta.title) || T.untitled;
-      const li = el('li', { class: i === index ? 'current' : '' }, [
+      const current = i === index;
+      const li = el('li', { class: current ? 'current' : '' }, [
         el('button', { type: 'button', onclick: () => { started = true; goTo(i, true); } }, [
           el('span', { class: 'n', text: String(n) }),
+          current ? el('span', { class: 'eq', 'aria-hidden': 'true' }, [el('i'), el('i'), el('i')]) : null,
           el('span', { class: 't', text: label })
-        ])
+        ]),
+        current ? el('div', { class: 'rowbar', 'aria-hidden': 'true' }, [el('i')]) : null
       ]);
       ol.appendChild(li);
     });
@@ -829,6 +1072,11 @@ const STRINGS = {
     $('draftStatus').textContent = n + (n === 1 ? ' song' : ' songs') + ' in draft'
       + (p ? ' (' + p + ' still ' + (p === 1 ? 'needs' : 'need') + ' a link)' : '')
       + ' \u00b7 kept in this browser \u00b7 the file itself has ' + FILE_LIST.length;
+    $('resolveBtn').hidden = !(p && getApiKey());
+    $('shuffleBtn').hidden = list.length < 2;
+    const d = findDuplicates().length;
+    $('dedupeBtn').hidden = !d;
+    $('dedupeBtn').textContent = 'Remove ' + d + ' duplicate' + (d === 1 ? '' : 's');
   }
 
   function renderAll() { renderNow(); renderList(); renderEditor(); }
@@ -851,11 +1099,14 @@ const STRINGS = {
     seek.style.setProperty('--p', (v / 10) + '%');
     $('elapsed').textContent = fmt(c);
     $('total').textContent = fmt(d);
+    const row = document.querySelector('.songs li.current');
+    if (row) row.style.setProperty('--p', (v / 10) + '%');
   }
 
   function setPlaying(on) {
-    $('icPlay').hidden = on;
-    $('icPause').hidden = !on;
+    // SVG elements have no .hidden property, so toggle the attribute itself.
+    $('icPlay').toggleAttribute('hidden', on);
+    $('icPause').toggleAttribute('hidden', !on);
     $('play').setAttribute('aria-label', on ? 'Pause' : 'Play');
     document.body.classList.toggle('playing', on);
     if (started) $('hint').textContent = '';
@@ -1059,6 +1310,51 @@ const STRINGS = {
     return { title: clean(raw), videoId: '' };
   }
 
+  // Same song written differently ("Bon Jovi – Livin' on a Prayer" vs "Livin' On A Prayer — Bon Jovi"):
+  // compare the sorted words of the title, ignoring case, punctuation and bracketed parts.
+  function titleKey(title) {
+    return String(title || '').toLowerCase()
+      .replace(/\(.*?\)|\[.*?\]/g, ' ')
+      .replace(/[^a-z0-9À-ɏ]+/g, ' ')
+      .trim().split(' ').filter(Boolean).sort().join(' ');
+  }
+  function findDuplicates() {
+    const seenIds = new Set(), seenKeys = new Set(), dups = [];
+    list.forEach((s, i) => {
+      const k = titleKey(s.title);
+      if ((isPlayable(s) && seenIds.has(s.videoId)) || (k && seenKeys.has(k))) { dups.push(i); return; }
+      if (isPlayable(s)) seenIds.add(s.videoId);
+      if (k) seenKeys.add(k);
+    });
+    return dups;
+  }
+  // Put the draft in a random order (Fisher-Yates); the song that is playing stays selected.
+  function shuffleOrder() {
+    if (list.length < 2) return;
+    const current = currentSong();
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    }
+    index = Math.max(0, list.indexOf(current));
+    saveDraft();
+    renderAll();
+    $('bulkMsg').textContent = 'Shuffled ' + list.length + ' songs. Save to keep this order.';
+  }
+  function removeDuplicates() {
+    const dups = findDuplicates();
+    if (!dups.length) return;
+    if (!confirm('Remove ' + dups.length + ' duplicate ' + (dups.length === 1 ? 'song' : 'songs') + '? The first copy of each is kept.')) return;
+    const current = currentSong();
+    const drop = new Set(dups);
+    list = list.filter((s, i) => !drop.has(i));
+    const at = list.indexOf(current);
+    saveDraft();
+    if (at >= 0) { index = at; renderAll(); }
+    else goTo(Math.min(index, Math.max(0, list.length - 1)), false, 1);
+    $('bulkMsg').textContent = 'Removed ' + dups.length + ' duplicate ' + (dups.length === 1 ? 'song' : 'songs') + '.';
+  }
+
   function bulkAdd(text) {
     const before = playableCount();
     let added = 0, pending = 0, dups = 0, skipped = 0;
@@ -1071,8 +1367,8 @@ const STRINGS = {
         list.push({ title: entry.title, videoId: entry.videoId });
         added += 1;
       } else {
-        const t = entry.title.toLowerCase();
-        if (list.some((s) => !isPlayable(s) && s.title.toLowerCase() === t)) { dups += 1; continue; }
+        const k = titleKey(entry.title);
+        if (k && list.some((s) => titleKey(s.title) === k)) { dups += 1; continue; }
         list.push({ title: entry.title, videoId: '' });
         added += 1;
         pending += 1;
@@ -1085,6 +1381,7 @@ const STRINGS = {
     if (skipped) parts.push(skipped + ' skipped (not a YouTube link)');
     $('bulkMsg').textContent = parts.join(' · ') + '.';
     if (before === 0 && playableCount() > 0) goTo(0, false); else renderAll();
+    if (pending && getApiKey()) resolvePending();   // look the plain names up automatically
     return added;
   }
   function move(i, delta) {
@@ -1130,28 +1427,146 @@ const STRINGS = {
     const lines = songs.map((s) => '  { title: ' + jsString(s.title) + ', videoId: ' + jsString(s.videoId) + ' },');
     return 'const PLAYLIST = [\n' + lines.join('\n') + '\n];';
   }
-  function exportHtml() {
+  // The complete HTML of this file with the current playlist baked in, or null if the markers are missing.
+  function buildExport() {
     // Marker strings are assembled here so that this code does not itself contain them.
     const START = '// ==== PLAYLIST ' + 'START ====';
     const END = '// ==== PLAYLIST ' + 'END ====';
     const src = SOURCE_SNAPSHOT;
     const a = src.indexOf(START);
     const b = a < 0 ? -1 : src.indexOf(END, a + START.length);
-    if (a < 0 || b < 0) { setAddError('Could not find the playlist markers in this file, so nothing was exported.'); return; }
-
+    if (a < 0 || b < 0) { setSaveMsg('Could not find the playlist markers in this file, so nothing was saved.'); return null; }
     const songs = sanitizeList(list, false);          // entries without a link cannot be played, so they stay out
     const left = list.length - songs.length;
     const out = src.slice(0, a + START.length) + '\n' + serializePlaylist(songs) + '\n' + src.slice(b);
-    const blob = new Blob([out], { type: 'text/html;charset=utf-8' });
+    return { out: out, songs: songs, left: left };
+  }
+  function setSaveMsg(text) { $('saveMsg').textContent = text || ''; }
+  function summary(built, verb) {
+    return verb + ' ' + built.songs.length + (built.songs.length === 1 ? ' song' : ' songs')
+      + (built.left ? '; ' + built.left + ' without a link ' + (built.left === 1 ? 'was' : 'were') + ' left out' : '') + '.';
+  }
+
+  function downloadHtml(built) {
+    const blob = new Blob([built.out], { type: 'text/html;charset=utf-8' });
     const href = URL.createObjectURL(blob);
     const link = el('a', { href: href, download: 'music-player.html' });
     document.body.appendChild(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(href), 10000);
-    setAddError('');
-    $('bulkMsg').textContent = 'Exported ' + songs.length + (songs.length === 1 ? ' song' : ' songs')
-      + (left ? '; ' + left + ' without a link ' + (left === 1 ? 'was' : 'were') + ' left out.' : '.');
+  }
+  function exportHtml() {
+    const built = buildExport();
+    if (!built) return;
+    downloadHtml(built);
+    setSaveMsg(summary(built, 'Downloaded a copy with'));
+  }
+
+  // "Save to file": write straight over the real file on disk (Chrome/Edge), else fall back to a download.
+  async function saveToFile() {
+    const built = buildExport();
+    if (!built) return;
+    if (typeof window.showSaveFilePicker !== 'function') {
+      downloadHtml(built);
+      setSaveMsg('This browser cannot write files directly, so a copy was downloaded. Replace music-player.html with it.');
+      return;
+    }
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'music-player.html',
+        types: [{ description: 'HTML file', accept: { 'text/html': ['.html'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(built.out);
+      await writable.close();
+      const local = IS_FILE_URL || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      setSaveMsg(summary(built, 'Saved') + ' File: ' + handle.name + '.' + (local ? ' Reloading…' : ' Upload it to the website to publish it.'));
+      if (local) setTimeout(() => location.reload(), 1200);
+    } catch (err) {
+      if (err && err.name === 'AbortError') { setSaveMsg('Save cancelled.'); return; }
+      setSaveMsg('Could not save: ' + (err && err.message ? err.message : err));
+    }
+  }
+
+  // "Save to website": commit the file into a GitHub repository (GitHub Pages redeploys it).
+  const GH_STORE = 'yt-music-player.github';
+  const GH_REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+  const GH_PATH_RE = /^(?!.*\.\.)[A-Za-z0-9_\-./]+\.html$/;
+  const GH_BRANCH_RE = /^[A-Za-z0-9_.\-/]+$/;
+  const GH_TOKEN_RE = /^[A-Za-z0-9_]{20,255}$/;
+  function getGitHub() {
+    try {
+      const cfg = JSON.parse(localStorage.getItem(GH_STORE) || 'null');
+      if (!cfg || !GH_REPO_RE.test(cfg.repo || '') || !GH_PATH_RE.test(cfg.path || '') || !GH_BRANCH_RE.test(cfg.branch || '') || !GH_TOKEN_RE.test(cfg.token || '')) return null;
+      return cfg;
+    } catch (e) { return null; }
+  }
+  function toBase64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  async function saveToWebsite() {
+    const cfg = getGitHub();
+    if (!cfg) { setSaveMsg('Fill in the website settings below first.'); return; }
+    const built = buildExport();
+    if (!built) return;
+    $('saveWebBtn').disabled = true;
+    setSaveMsg('Saving to GitHub…');
+    try {
+      const api = 'https://api.github.com/repos/' + cfg.repo + '/contents/' + cfg.path.split('/').map(encodeURIComponent).join('/');
+      const headers = { 'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+      let sha = null;
+      const current = await fetch(api + '?ref=' + encodeURIComponent(cfg.branch), { headers: headers });
+      if (current.ok) { const j = await current.json(); sha = j && j.sha ? String(j.sha) : null; }
+      else if (current.status !== 404) throw new Error('GitHub refused to read the current file (' + current.status + '). Check repository, branch and token.');
+      const body = { message: 'Update playlist (' + built.songs.length + ' songs)', content: toBase64(built.out), branch: cfg.branch };
+      if (sha) body.sha = sha;
+      const put = await fetch(api, { method: 'PUT', headers: Object.assign({ 'Content-Type': 'application/json' }, headers), body: JSON.stringify(body) });
+      if (!put.ok) {
+        let m = '';
+        try { m = String((await put.json()).message || ''); } catch (e) { /* no JSON */ }
+        throw new Error('GitHub did not accept the save (' + put.status + (m ? ': ' + m : '') + ').');
+      }
+      setSaveMsg(summary(built, 'Saved to GitHub with') + ' The website updates within a minute or two; then reload this page.');
+    } catch (err) {
+      setSaveMsg(err && err.message ? err.message : 'Could not save to GitHub.');
+    } finally {
+      $('saveWebBtn').disabled = false;
+    }
+  }
+  function renderGitHub() {
+    const cfg = getGitHub();
+    $('saveWebBtn').hidden = !cfg;
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(GH_STORE) || 'null'); } catch (e) { raw = null; }
+    $('ghRepo').value = (raw && raw.repo) || '';
+    $('ghPath').value = (raw && raw.path) || 'music-player.html';
+    $('ghBranch').value = (raw && raw.branch) || 'main';
+    $('ghToken').value = (raw && raw.token) || '';
+  }
+  function saveGitHubSettings() {
+    const cfg = {
+      repo: $('ghRepo').value.trim(),
+      path: $('ghPath').value.trim().replace(/^\/+/, '') || 'music-player.html',
+      branch: $('ghBranch').value.trim() || 'main',
+      token: $('ghToken').value.trim()
+    };
+    if (!cfg.repo && !cfg.token) {
+      try { localStorage.removeItem(GH_STORE); } catch (e) { /* ignore */ }
+      $('ghMsg').textContent = 'Website settings removed.';
+      renderGitHub();
+      return;
+    }
+    if (!GH_REPO_RE.test(cfg.repo)) { $('ghMsg').textContent = 'Repository must look like owner/name.'; return; }
+    if (!GH_PATH_RE.test(cfg.path)) { $('ghMsg').textContent = 'The file path must end in .html and contain no "..".'; return; }
+    if (!GH_BRANCH_RE.test(cfg.branch)) { $('ghMsg').textContent = 'That branch name is not valid.'; return; }
+    if (!GH_TOKEN_RE.test(cfg.token)) { $('ghMsg').textContent = 'That does not look like a GitHub token.'; return; }
+    try { localStorage.setItem(GH_STORE, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+    $('ghMsg').textContent = 'Settings saved in this browser. "Save to website" is now available above.';
+    renderGitHub();
   }
 
   // ---------- mode (#youssef) ----------
@@ -1181,6 +1596,9 @@ const STRINGS = {
     $('hint').textContent = T.hint;
     $('footer').textContent = T.footer;
     document.title = T.brand;
+    const layout = typeof SETTINGS === 'object' && SETTINGS && typeof SETTINGS.layout === 'string' ? SETTINGS.layout : 'audio';
+    document.body.classList.toggle('compact', layout === 'compact');
+    document.body.classList.toggle('audio', layout !== 'compact' && layout !== 'video');
 
     isCurator = location.hash === CURATOR_HASH;
     list = resolveList();
@@ -1227,11 +1645,28 @@ const STRINGS = {
       }
     });
     $('exportBtn').addEventListener('click', exportHtml);
+    $('saveFileBtn').addEventListener('click', saveToFile);
+    $('saveWebBtn').addEventListener('click', saveToWebsite);
+    $('ghSave').addEventListener('click', saveGitHubSettings);
+    renderGitHub();
     $('bulkAdd').addEventListener('click', () => {
       if (bulkAdd($('bulkText').value) > 0) $('bulkText').value = '';
     });
+    $('resolveBtn').addEventListener('click', resolvePending);
+    $('dedupeBtn').addEventListener('click', removeDuplicates);
+    $('shuffleBtn').addEventListener('click', shuffleOrder);
+    $('apiKey').value = getApiKey();
+    const saveKey = () => {
+      const k = $('apiKey').value.trim();
+      if (!k) { setApiKey(''); $('apiKeyMsg').textContent = 'Key removed.'; }
+      else if (!KEY_RE.test(k)) { $('apiKeyMsg').textContent = 'That does not look like an API key.'; return; }
+      else { setApiKey(k); $('apiKeyMsg').textContent = 'Key saved in this browser.'; }
+      renderEditor();
+    };
+    $('apiKeySave').addEventListener('click', saveKey);
+    $('apiKey').addEventListener('change', saveKey);
     $('resetBtn').addEventListener('click', () => {
-      if (!confirm('Discard your draft and go back to the playlist stored in this file?')) return;
+      if (!confirm('Discard your unsaved changes and go back to the playlist stored in this file?')) return;
       clearDraft();
       list = resolveList();
       index = 0;
