@@ -166,6 +166,7 @@ const PLAYLIST = [
   { title: "Cigarettes After Sex — Cry", videoId: "3XqqkrJENB4" },
   { title: "The Whispers – And the Beat Goes On", videoId: "pEmX5HR9ZxU" },
   { title: "Billy Ocean – Stay the Night", videoId: "ikpyUQ3PWPA" },
+  { title: "Da quando eravamo bambini", videoId: "c5SHd6rJqPU" },
 ];
 // ==== PLAYLIST END ====
 
@@ -187,7 +188,7 @@ const STRINGS = {
   allUnavailable: "None of the songs could be played right now. Please try again later.",
   offline: "YouTube couldn't be reached. Please check the internet connection and open this file again.",
   fileBlocked: "YouTube doesn't allow playback when this page is opened straight from the hard disk. Please open it from its web address instead.",
-  footer: "Enjoy"
+  footer: ""   // footer line under the song list; leave empty for none
 };
 </script>
 
@@ -1543,7 +1544,9 @@ https://www.youtube.com/watch?v=xxxxxxxxxxx"></textarea>
       if (!put.ok) {
         let m = '';
         try { m = String((await put.json()).message || ''); } catch (e) { /* no JSON */ }
-        throw new Error('GitHub did not accept the save (' + put.status + (m ? ': ' + m : '') + ').');
+        const hint = put.status === 403 ? ' The token must have "Contents: Read and write" and this repository selected under "Repository access".'
+          : put.status === 404 ? ' Check the repository name and branch.' : '';
+        throw new Error('GitHub did not accept the save (' + put.status + (m ? ': ' + m : '') + ').' + hint);
       }
       setSaveMsg(summary(built, 'Saved to GitHub with') + ' The website updates within a minute or two; then reload this page.');
     } catch (err) {
@@ -1610,6 +1613,7 @@ https://www.youtube.com/watch?v=xxxxxxxxxxx"></textarea>
     $('songsHeading').textContent = T.songs;
     $('hint').textContent = T.hint;
     $('footer').textContent = T.footer;
+    $('footer').hidden = !T.footer;
     document.title = T.brand;
     const layout = typeof SETTINGS === 'object' && SETTINGS && typeof SETTINGS.layout === 'string' ? SETTINGS.layout : 'audio';
     document.body.classList.toggle('compact', layout === 'compact');
