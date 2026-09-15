@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--
+  ============================================================================
+  MUSIC PLAYER  ·  one self-contained file, played through YouTube
+  ============================================================================
+  Every song plays through YouTube's official embedded player. Nothing here
+  is downloaded, ripped or extracted; YouTube serves the video, its ads and
+  its consent dialogs exactly as on youtube.com.
+
+  HOW TO OPEN
+  ----------------------------------------------------------------------------
+  YouTube's embedded player refuses to run inside a page opened straight from
+  the hard disk (a file:// address). Browsers send no Referer header from such
+  pages and YouTube then answers with "Error 153". Verified on 2026-09-15;
+  this is YouTube's rule, not a fault in this file. The page therefore has to
+  arrive through a web address (http:// or https://):
+
+    * Recommended: upload this single file to any static web space (your own
+      hosting, GitHub Pages, Netlify ...) and give her the link as a bookmark
+      or desktop shortcut. The file works unchanged; to update it, export from
+      curator mode and upload the new copy over the old one.
+    * Windows-only alternative: the optional "Play Music.bat" launcher serves
+      this file at http://localhost:8477/ using only tools built into Windows.
+
+  An internet connection is needed either way, for YouTube itself. Opened
+  as a plain file, the page still shows and explains the situation on screen.
+
+  HOW TO ADD OR CHANGE SONGS
+  ----------------------------------------------------------------------------
+  A) By hand (any text editor)
+     Just below this comment is the PLAYLIST array, between the lines marked
+     "PLAYLIST START" and "PLAYLIST END". Each song is one line:
+
+         { title: "Song title", videoId: "dQw4w9WgXcQ" },
+
+     The videoId is the 11-character code from a YouTube link:
+         https://www.youtube.com/watch?v=dQw4w9WgXcQ   ->   dQw4w9WgXcQ
+         https://youtu.be/dQw4w9WgXcQ                  ->   dQw4w9WgXcQ
+     Leave the title empty ("") and the player shows YouTube's own title.
+
+  B) Curator mode (no code editing)
+     Open the file in the browser, then add   #youssef   to the end of the
+     address in the address bar and press Enter, e.g.
+         file:///C:/Users/you/Music/music-player.html#youssef
+     An editor appears under the player. Paste any YouTube link or ID to
+     add a song, move songs with the arrows, remove with the cross, and type
+     titles directly into the list. The draft is kept in THIS browser's
+     localStorage, so nothing is lost while you edit. When you're happy,
+     click "Export playlist as HTML": the browser downloads a fresh copy of
+     this very file with your playlist written into the PLAYLIST array.
+     Send that file on; it plays without #youssef and shows no editor.
+
+     NOTE: #youssef is NOT a security feature and is not meant to be one.
+     Anyone holding this file can add the hash and see the editor; that is
+     harmless, because the editor only changes their own local copy. It is
+     purely a convenience toggle that keeps the ordinary view clean.
+
+  SECURITY NOTES
+  ----------------------------------------------------------------------------
+  - No API key, no account, no server, no secrets anywhere in this file.
+  - All text (song titles, pasted links, YouTube metadata) is placed with
+    textContent / createElement. innerHTML, eval and Function() are not used.
+  - Pasted links are parsed with the URL API and accepted only if they come
+    from a YouTube host and yield a valid 11-character video ID.
+  - The only remote script is https://www.youtube.com/iframe_api; the
+    Content-Security-Policy below refuses every other script, frame and
+    network destination.
+  ============================================================================
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="color-scheme" content="light dark">
+<title>Music</title>
+
+<script>
+// ==== PLAYLIST START ====
+const PLAYLIST = [
+  { title: "Billy Ocean – Stay the Night", videoId: "ikpyUQ3PWPA" },
+  { title: "Kool & the Gang – Fresh", videoId: "sTJ1XwGDcA4" },
+  { title: "The Whispers – And the Beat Goes On", videoId: "pEmX5HR9ZxU" },
+  { title: "Fat Larry's Band – Act Like You Know", videoId: "ImRXjgr4dbs" },
+  { title: "The Brothers Johnson – Stomp!", videoId: "tPBDMihPRJA" },
+  { title: "Bananarama – Cruel Summer", videoId: "l9ml3nyww80" },
+  { title: "Modern Talking – Cheri Cheri Lady", videoId: "eNvUS-6PTbs" },
+  { title: "Billy Ocean – Caribbean Queen", videoId: "uxX2gA18grk" },
+  { title: "Sabrina – Boys (Summertime Love)", videoId: "_OIPDU8kCNo" },
+  { title: "Samantha Fox – Touch Me", videoId: "W1btg3mpEOc" },
+  { title: "Pet Shop Boys – Domino Dancing", videoId: "ik2YF05iX2w" },
+  { title: "Silent Circle – Oh, Don't Lose Your Heart Tonight", videoId: "b_WNjR8YYYM" },
+  { title: "Michael Jackson – Beat It", videoId: "oRdxUFDoQe0" },
+  { title: "Toto – Hold the Line", videoId: "htgr3pvBr-I" },
+  { title: "Bon Jovi – Livin' on a Prayer", videoId: "lDK9QqIzhwk" },
+  { title: "Survivor – Burning Heart", videoId: "Kc71KZG87X4" },
+  { title: "Laura Branigan – Self Control", videoId: "RP0_8J7uxhs" },
+  { title: "Sandra – (I'll Never Be) Maria Magdalena", videoId: "gau1w7kXTQ4" },
+  { title: "Alphaville – Big in Japan", videoId: "tl6u2NASUzU" },
+  { title: "Michael Jackson – Billie Jean", videoId: "Zi_XLOBDo_Y" },
+  { title: "Bandolero – Paris Latino", videoId: "ruauz315oms" },
+  { title: "Madonna – La Isla Bonita", videoId: "zpzdgmqIHOQ" },
+  { title: "Sandra – In the Heat of the Night", videoId: "HSoTCQXJsDQ" },
+  { title: "Amy Holland – She's on Fire", videoId: "vu5A4QIaWoY" },
+  { title: "Kenny Loggins – Danger Zone", videoId: "siwpn14IE7E" },
+  { title: "Paul Engemann – Push It to the Limit", videoId: "Jase8HMDlvY" },
+  { title: "Imagination – Just an Illusion", videoId: "_QEdh1tcLtw" },
+  { title: "Sandra – On the Tray (Seven Years)", videoId: "T7kaZ0ARxAo" },
+  { title: "Silent Circle – Touch in the Night", videoId: "BQU0seSG8eo" },
+  { title: "Rockwell – Somebody's Watching Me", videoId: "7YvAYIJSSZY" },
+  { title: "Silent Circle – Stop the Rain in the Night", videoId: "x245r8-D_eY" },
+  { title: "Tears for Fears – Everybody Wants to Rule the World", videoId: "aGCdLKXNF3w" },
+  { title: "Sade – Smooth Operator", videoId: "4TYv2PhG89A" },
+];
+// ==== PLAYLIST END ====
+
+// Words she sees on screen. Translate here if you like (e.g. into German).
+const STRINGS = {
+  brand: "Music",
+  songs: "Songs",
+  hint: "Press play to begin",
+  untitled: "Untitled",
+  empty: "No songs yet",
+  unavailable: "This video can't be played here. Skipping to the next one…",
+  allUnavailable: "None of the songs could be played right now. Please try again later.",
+  offline: "YouTube couldn't be reached. Please check the internet connection and open this file again.",
+  fileBlocked: "YouTube doesn't allow playback when this page is opened straight from the hard disk. Please open it from its web address instead.",
+  footer: "Plays through the official YouTube player."
+};
+</script>
+
+<!-- The one and only remote script: YouTube's official IFrame Player API. -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --card: #fffcf7;
+    --ink: #1e1a16;
+    --muted: #7d726a;
+    --line: #e6dcd0;
+    --track: #e1d7ca;
+    --accent: #b4553d;
+    --on-accent: #ffffff;
+    --shadow: 0 30px 70px -35px rgba(70, 45, 25, .45);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141110;
+      --card: #1d1917;
+      --ink: #f1eae0;
+      --muted: #a2968a;
+      --line: #2f2925;
+      --track: #35302b;
+      --accent: #d9775d;
+      --shadow: 0 30px 70px -35px rgba(0, 0, 0, .9);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(20px, 5vw, 48px) clamp(16px, 5vw, 32px) 72px;
+  }
+
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .brand {
+    font-family: var(--serif);
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    font-size: .78rem;
+    color: var(--muted);
+  }
+  .badge {
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: var(--on-accent);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  /* The YouTube player stays visible so YouTube can show video and ads. */
+  .video {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: var(--shadow);
+  }
+  .video #yt, .video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .video-note {
+    position: absolute;
+    left: 12px; right: 12px; bottom: 12px;
+    background: rgba(0, 0, 0, .74);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: .9rem;
+    text-align: center;
+  }
+
+  .now { text-align: center; margin-top: 36px; }
+  .title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.55rem, 4.5vw, 2.3rem);
+    line-height: 1.2;
+    margin: 0;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+    transition: opacity .35s ease;
+  }
+  .artist {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: .9rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    min-height: 1.5em;
+    transition: opacity .35s ease;
+  }
+  .fading .title, .fading .artist { opacity: 0; }
+
+  .seek { margin-top: 32px; }
+  #seek {
+    --p: 0%;
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  #seek:disabled { cursor: default; opacity: .6; }
+  #seek::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--accent) 0 var(--p), var(--track) var(--p) 100%);
+  }
+  #seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--card);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+    transition: transform .15s ease;
+  }
+  #seek:hover::-webkit-slider-thumb, #seek:active::-webkit-slider-thumb { transform: scale(1.2); }
+  #seek::-moz-range-track { height: 4px; border-radius: 2px; background: var(--track); }
+  #seek::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
+  #seek::-moz-range-thumb {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--card);
+  }
+  #seek:focus-visible { outline: none; }
+  #seek:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent); }
+  .times {
+    display: flex;
+    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    font-size: .8rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 28px;
+    margin-top: 20px;
+  }
+  .controls button {
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background .2s ease, transform .15s ease, color .2s ease;
+  }
+  .controls button:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+  .controls button:active { transform: scale(.94); }
+  .controls button:disabled { opacity: .35; cursor: default; transform: none; }
+  .controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .controls .play {
+    width: 76px; height: 76px;
+    background: var(--ink);
+    color: var(--bg);
+    box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .55);
+  }
+  .controls .play:hover { background: var(--accent); color: var(--on-accent); }
+  .controls svg { width: 26px; height: 26px; fill: currentColor; }
+  .controls .play svg { width: 32px; height: 32px; }
+
+  .hint {
+    text-align: center;
+    color: var(--muted);
+    font-size: .85rem;
+    margin: 18px 0 0;
+    min-height: 1.3em;
+    transition: opacity .4s ease;
+  }
+  .playing .hint { opacity: 0; }
+
+  .section { margin-top: 56px; }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 1rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+
+  .songs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .songs li { border-bottom: 1px solid var(--line); }
+  .songs button {
+    display: flex;
+    width: 100%;
+    gap: 16px;
+    align-items: baseline;
+    padding: 14px 10px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background .2s ease;
+  }
+  .songs button:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+  .songs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .songs .n {
+    flex: none;
+    width: 2.2ch;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    font-size: .85rem;
+  }
+  .songs .t { flex: 1; }
+  .songs li.current .n, .songs li.current .t { color: var(--accent); }
+  .songs li.current .t { font-weight: 500; }
+  .songs .empty { padding: 14px 10px; color: var(--muted); font-size: .9rem; }
+
+  /* ---------- Curator mode (only shown with #youssef) ---------- */
+  .curator {
+    margin-top: 56px;
+    border: 1px dashed var(--accent);
+    border-radius: 20px;
+    padding: 24px;
+    background: var(--card);
+  }
+  .curator h2 { color: var(--accent); }
+  .curator .lead { color: var(--muted); font-size: .9rem; margin: 0 0 18px; }
+  .add {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr auto;
+    gap: 10px;
+  }
+  .curator input[type=text] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: .95rem;
+  }
+  .curator input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .btn {
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: .9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s ease, filter .2s ease;
+  }
+  .btn:hover { background: var(--line); }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+  .btn.primary:hover { filter: brightness(1.08); background: var(--accent); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .err { color: var(--accent); font-size: .85rem; min-height: 1.3em; margin: 8px 0 0; }
+
+  .bulk { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .bulk h3 { font: inherit; font-weight: 600; font-size: .95rem; margin: 0 0 6px; }
+  .curator textarea {
+    display: block;
+    width: 100%;
+    min-height: 150px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--ink);
+    font: inherit;
+    font-size: .95rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .curator textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .inline { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-top: 10px; }
+  .msg { font-size: .85rem; color: var(--muted); }
+  .row.pending { background: color-mix(in srgb, var(--accent) 7%, transparent); border-radius: 12px; padding-left: 8px; padding-right: 8px; }
+  .row .fix { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  .row .fix input[type=text] { flex: 1; min-width: 180px; padding: 8px 12px; font-size: .85rem; }
+  .btn.small { padding: 8px 12px; font-size: .82rem; text-decoration: none; display: inline-block; line-height: 1.3; }
+
+  .rows { list-style: none; margin: 18px 0 0; padding: 0; }
+  .row {
+    display: grid;
+    grid-template-columns: 2.2ch 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .row.current .n { color: var(--accent); font-weight: 600; }
+  .row .n { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .85rem; }
+  .row .id { font-family: var(--mono); font-size: .74rem; color: var(--muted); margin: 4px 0 0 2px; }
+  .row .acts { display: flex; gap: 4px; }
+  .row-empty { padding: 14px 0; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: .95rem;
+    display: grid;
+    place-items: center;
+    transition: background .15s ease;
+  }
+  .icon-btn:hover { background: var(--line); }
+  .icon-btn:disabled { opacity: .3; cursor: default; background: transparent; }
+  .icon-btn.danger:hover { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .status { font-size: .82rem; color: var(--muted); margin-left: auto; }
+
+  footer {
+    margin-top: 64px;
+    text-align: center;
+    color: var(--muted);
+    font-size: .78rem;
+  }
+
+  @media (max-width: 600px) {
+    .add { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 2.2ch 1fr; }
+    .row .acts { grid-column: 2; }
+    .status { margin-left: 0; width: 100%; }
+    .controls { gap: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <span class="brand" id="brand">Music</span>
+    <span class="badge" id="curatorBadge" hidden>Curator mode</span>
+  </header>
+
+  <section class="stage">
+    <div class="video">
+      <div id="yt"></div>
+      <div class="video-note" id="videoNote" role="status" aria-live="polite" hidden></div>
+    </div>
+
+    <div class="now" id="now">
+      <h1 class="title" id="songTitle">—</h1>
+      <p class="artist" id="songArtist"></p>
+    </div>
+
+    <div class="seek">
+      <input type="range" id="seek" min="0" max="1000" step="1" value="0" aria-label="Position" disabled>
+      <div class="times">
+        <span id="elapsed">0:00</span>
+        <span id="total">0:00</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button type="button" id="prev" aria-label="Previous song" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+      </button>
+      <button type="button" id="play" class="play" aria-label="Play" disabled>
+        <svg id="icPlay" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="icPause" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+      </button>
+      <button type="button" id="next" aria-label="Next song" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>
+      </button>
+    </div>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <section class="section" id="songsSection">
+    <h2 id="songsHeading">Songs</h2>
+    <ol class="songs" id="songList"></ol>
+  </section>
+
+  <!-- Curator editor: hidden unless the page is opened with #youssef (see comment at the top). -->
+  <section class="curator" id="curator" hidden aria-labelledby="curatorHeading">
+    <h2 id="curatorHeading">Curator mode</h2>
+    <p class="lead">Paste a YouTube link or video ID to add a song. Titles can be typed in the list, or left empty to be filled in from YouTube when the song plays. Your draft lives in this browser only; export it to bake it into the file.</p>
+    <form class="add" id="addForm" autocomplete="off">
+      <input type="text" id="addUrl" placeholder="YouTube link or 11-character video ID" spellcheck="false" aria-label="YouTube link or video ID">
+      <input type="text" id="addTitle" placeholder="Title (optional)" maxlength="200" aria-label="Title">
+      <button class="btn primary" type="submit">Add song</button>
+    </form>
+    <p class="err" id="addErr" role="alert"></p>
+    <div class="bulk">
+      <h3>Add several at once</h3>
+      <p class="lead">One song per line. A line can be just &ldquo;Artist &ndash; Title&rdquo;, a YouTube link, or a title and a link separated by &ldquo;|&rdquo;. Lines without a link are kept as &ldquo;needs a link&rdquo;: use &ldquo;Search on YouTube&rdquo; next to them, then paste the link back into that row.</p>
+      <textarea id="bulkText" spellcheck="false" placeholder="Billy Ocean - Stay the Night&#10;Kool &amp; the Gang - Fresh | https://youtu.be/xxxxxxxxxxx&#10;https://www.youtube.com/watch?v=xxxxxxxxxxx"></textarea>
+      <div class="inline">
+        <button class="btn primary" type="button" id="bulkAdd">Add all lines</button>
+        <span class="msg" id="bulkMsg" role="status"></span>
+      </div>
+    </div>
+    <ol class="rows" id="rows"></ol>
+    <div class="actions">
+      <button class="btn primary" type="button" id="exportBtn">Export playlist as HTML</button>
+      <button class="btn" type="button" id="resetBtn">Discard draft, reload file's playlist</button>
+      <span class="status" id="draftStatus"></span>
+    </div>
+  </section>
+
+  <footer id="footer"></footer>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // Snapshot of this file's own markup, taken before anything below touches the DOM.
+  // "Export playlist as HTML" writes the current playlist into this snapshot.
+  const SOURCE_SNAPSHOT = serializeDocument();
+
+  const ID_RE = /^[A-Za-z0-9_-]{11}$/;
+  const CURATOR_HASH = '#youssef';
+  const DRAFT_KEY = 'yt-music-player.draft.v1';
+  const MAX_TITLE = 200;
+  const YT_HOSTS = new Set(['youtube.com', 'youtube-nocookie.com', 'youtu.be']);
+
+  // ---------- state ----------
+  let isCurator = false;
+  let list = [];
+  let index = 0;
+  let player = null;
+  let ready = false;
+  let started = false;   // becomes true after the first user-initiated play
+  let seeking = false;
+  let meta = null;       // { video_id, title, author } from the player
+  let errorStreak = 0;
+  let playerCreated = false;
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- tiny DOM helpers (textContent only, never innerHTML) ----------
+  function el(tag, attrs, children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+      for (const key of Object.keys(attrs)) {
+        const value = attrs[key];
+        if (value == null) continue;
+        if (key === 'class') node.className = value;
+        else if (key === 'text') node.textContent = value;
+        else if (key === 'disabled' || key === 'hidden') node[key] = !!value;
+        else if (key === 'value') node.value = value;
+        else if (key.startsWith('on') && typeof value === 'function') node.addEventListener(key.slice(2), value);
+        else node.setAttribute(key, value);
+      }
+    }
+    if (children) {
+      for (const child of children) {
+        if (child == null) continue;
+        node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+      }
+    }
+    return node;
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  function serializeDocument() {
+    let out = '';
+    for (const node of document.childNodes) {
+      if (node.nodeType === Node.DOCUMENT_TYPE_NODE) out += '<!DOCTYPE html>\n';
+      else if (node.nodeType === Node.COMMENT_NODE) out += '<!--' + node.data + '-->\n';
+      else if (node.nodeType === Node.ELEMENT_NODE) out += node.outerHTML + '\n';
+    }
+    return out;
+  }
+
+  // ---------- playlist model ----------
+  // allowPending: keep draft entries that have a title but no video ID yet (added from a plain text list).
+  function sanitizeList(raw, allowPending) {
+    const out = [];
+    if (!Array.isArray(raw)) return out;
+    for (const item of raw) {
+      if (!item || typeof item !== 'object') continue;
+      const id = typeof item.videoId === 'string' ? item.videoId.trim() : '';
+      const title = typeof item.title === 'string' ? item.title.trim().slice(0, MAX_TITLE) : '';
+      if (ID_RE.test(id)) out.push({ title: title, videoId: id });
+      else if (allowPending && title) out.push({ title: title, videoId: '' });
+    }
+    return out;
+  }
+  function isPlayable(song) { return !!(song && ID_RE.test(song.videoId)); }
+  function playableCount() { return list.filter(isPlayable).length; }
+
+  const FILE_LIST = sanitizeList(typeof PLAYLIST !== 'undefined' ? PLAYLIST : []);
+  const T = Object.assign({
+    brand: 'Music', songs: 'Songs', hint: 'Press play to begin', untitled: 'Untitled', empty: 'No songs yet',
+    unavailable: 'This video can\u2019t be played here. Skipping to the next one\u2026',
+    allUnavailable: 'None of the songs could be played right now.',
+    offline: 'YouTube couldn\u2019t be reached. Please check the internet connection.',
+    fileBlocked: 'YouTube doesn\u2019t allow playback from a page opened straight from the hard disk. Please open it from a web address.',
+    footer: 'Plays through the official YouTube player.'
+  }, typeof STRINGS === 'object' && STRINGS ? STRINGS : {});
+
+  // YouTube answers "Error 153" to any page that sends no Referer, which is every file:// page.
+  const IS_FILE_URL = location.protocol === 'file:';
+
+  function loadDraft() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? sanitizeList(parsed, true) : null;
+    } catch (e) { return null; }
+  }
+  function saveDraft() {
+    if (!isCurator) return;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(list)); } catch (e) { /* storage unavailable: draft just isn't persisted */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ }
+  }
+  function resolveList() {
+    if (isCurator) {
+      const draft = loadDraft();
+      if (draft) return draft;
+    }
+    return FILE_LIST.map((s) => ({ title: s.title, videoId: s.videoId }));
+  }
+
+  // ---------- formatting ----------
+  function fmt(seconds) {
+    const s = Math.max(0, Math.floor(seconds || 0));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const mm = h ? String(m).padStart(2, '0') : String(m);
+    return (h ? h + ':' : '') + mm + ':' + String(sec).padStart(2, '0');
+  }
+  function duration() {
+    if (!ready) return 0;
+    const d = player.getDuration();
+    return isFinite(d) && d > 0 ? d : 0;
+  }
+
+  // ---------- rendering ----------
+  function currentSong() { return list[index] || null; }
+  function metaMatches(song) { return !!(meta && song && meta.video_id === song.videoId); }
+
+  function renderNow() {
+    const song = currentSong();
+    const hasMeta = metaMatches(song);
+    const title = song ? (song.title || (hasMeta && meta.title) || T.untitled) : '\u2014';
+    $('songTitle').textContent = title;
+    $('songArtist').textContent = song ? (hasMeta && meta.author ? meta.author : '') : T.empty;
+    document.title = song ? title + ' \u00b7 ' + T.brand : T.brand;
+
+    const off = !ready || !isPlayable(song);
+    $('play').disabled = off;
+    $('prev').disabled = off || list.length < 2;
+    $('next').disabled = off || list.length < 2;
+    $('seek').disabled = off;
+  }
+
+  function renderList() {
+    const ol = $('songList');
+    clear(ol);
+    if (!playableCount()) {
+      ol.appendChild(el('li', {}, [el('div', { class: 'empty', text: T.empty })]));
+      return;
+    }
+    let n = 0;
+    list.forEach((song, i) => {
+      if (!isPlayable(song)) return;   // songs still waiting for a link are not shown to the listener
+      n += 1;
+      const label = song.title || (i === index && metaMatches(song) && meta.title) || T.untitled;
+      const li = el('li', { class: i === index ? 'current' : '' }, [
+        el('button', { type: 'button', onclick: () => { started = true; goTo(i, true); } }, [
+          el('span', { class: 'n', text: String(n) }),
+          el('span', { class: 't', text: label })
+        ])
+      ]);
+      ol.appendChild(li);
+    });
+  }
+
+  function renderEditor() {
+    if (!isCurator) return;
+    const rows = $('rows');
+    clear(rows);
+    if (!list.length) {
+      rows.appendChild(el('li', { class: 'row-empty', text: 'The playlist is empty. Add a song above.' }));
+    }
+    list.forEach((song, i) => {
+      const titleInput = el('input', {
+        type: 'text', value: song.title, maxlength: String(MAX_TITLE),
+        placeholder: 'Title (filled in from YouTube when played)', 'aria-label': 'Title of song ' + (i + 1)
+      });
+      titleInput.addEventListener('change', () => {
+        song.title = titleInput.value.trim().slice(0, MAX_TITLE);
+        saveDraft();
+        renderList();
+        renderNow();
+      });
+      const pending = !isPlayable(song);
+      let second;
+      if (pending) {
+        // No video yet: offer a YouTube search in a new tab and a box to paste the link back.
+        const linkInput = el('input', {
+          type: 'text', spellcheck: 'false', placeholder: 'Paste the YouTube link for this song here',
+          'aria-label': 'YouTube link for ' + (song.title || 'song ' + (i + 1))
+        });
+        linkInput.addEventListener('change', () => {
+          try {
+            const id = parseYouTubeInput(linkInput.value);
+            if (list.some((s) => s.videoId === id)) throw new Error('That video is already in the playlist.');
+            song.videoId = id;
+            saveDraft();
+            setAddError('');
+            if (playableCount() === 1) goTo(i, false); else renderAll();
+          } catch (err) {
+            setAddError(err && err.message ? err.message : 'Could not use that link.');
+            linkInput.focus();
+          }
+        });
+        const searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(song.title);
+        second = el('div', { class: 'fix' }, [
+          el('a', { class: 'btn small', href: searchUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Search on YouTube' }),
+          linkInput
+        ]);
+      } else {
+        second = el('div', { class: 'id', text: song.videoId });
+      }
+      rows.appendChild(el('li', { class: 'row' + (i === index ? ' current' : '') + (pending ? ' pending' : '') }, [
+        el('span', { class: 'n', text: String(i + 1) }),
+        el('div', {}, [titleInput, second]),
+        el('div', { class: 'acts' }, [
+          el('button', { class: 'icon-btn', type: 'button', title: 'Play', 'aria-label': 'Play', text: '\u25B6', disabled: pending, onclick: () => { started = true; goTo(i, true); } }),
+          el('button', { class: 'icon-btn', type: 'button', title: 'Move up', 'aria-label': 'Move up', text: '\u2191', disabled: i === 0, onclick: () => move(i, -1) }),
+          el('button', { class: 'icon-btn', type: 'button', title: 'Move down', 'aria-label': 'Move down', text: '\u2193', disabled: i === list.length - 1, onclick: () => move(i, 1) }),
+          el('button', { class: 'icon-btn danger', type: 'button', title: 'Remove', 'aria-label': 'Remove', text: '\u2715', onclick: () => remove(i) })
+        ])
+      ]));
+    });
+    const n = list.length;
+    const p = n - playableCount();
+    $('draftStatus').textContent = n + (n === 1 ? ' song' : ' songs') + ' in draft'
+      + (p ? ' (' + p + ' still ' + (p === 1 ? 'needs' : 'need') + ' a link)' : '')
+      + ' \u00b7 kept in this browser \u00b7 the file itself has ' + FILE_LIST.length;
+  }
+
+  function renderAll() { renderNow(); renderList(); renderEditor(); }
+
+  function resetSeek() {
+    const seek = $('seek');
+    seek.value = '0';
+    seek.style.setProperty('--p', '0%');
+    $('elapsed').textContent = '0:00';
+    $('total').textContent = '0:00';
+  }
+
+  function tick() {
+    if (!ready || seeking) return;
+    const d = duration();
+    const c = d ? Math.min(d, player.getCurrentTime() || 0) : 0;
+    const seek = $('seek');
+    const v = d ? Math.round((c / d) * 1000) : 0;
+    seek.value = String(v);
+    seek.style.setProperty('--p', (v / 10) + '%');
+    $('elapsed').textContent = fmt(c);
+    $('total').textContent = fmt(d);
+  }
+
+  function setPlaying(on) {
+    $('icPlay').hidden = on;
+    $('icPause').hidden = !on;
+    $('play').setAttribute('aria-label', on ? 'Pause' : 'Play');
+    document.body.classList.toggle('playing', on);
+    if (started) $('hint').textContent = '';
+  }
+
+  function showNote(text) { const n = $('videoNote'); n.textContent = text; n.hidden = false; }
+  function hideNote() {
+    if (IS_FILE_URL) { showNote(T.fileBlocked); return; }   // keep the explanation on screen
+    const n = $('videoNote'); n.hidden = true; n.textContent = '';
+  }
+
+  // ---------- transport ----------
+  // dir: +1 or -1, the direction to look in when the chosen entry has no video yet.
+  function goTo(i, autoplay, dir) {
+    if (!list.length) { index = 0; meta = null; renderAll(); return; }
+    const step = dir < 0 ? -1 : 1;
+    let idx = ((i % list.length) + list.length) % list.length;
+    for (let n = 0; n < list.length && !isPlayable(list[idx]); n++) idx = (idx + step + list.length) % list.length;
+    index = idx;
+    meta = null;
+    hideNote();
+    const now = $('now');
+    now.classList.add('fading');
+    setTimeout(() => now.classList.remove('fading'), 200);
+    if (ready) {
+      if (isPlayable(list[index])) {
+        const id = list[index].videoId;
+        if (autoplay) player.loadVideoById(id);
+        else player.cueVideoById(id);
+      } else {
+        player.stopVideo();
+      }
+    }
+    resetSeek();
+    renderAll();
+  }
+  function next(autoplay) { goTo(index + 1, autoplay, 1); }
+  function prev() {
+    if (ready && started && (player.getCurrentTime() || 0) > 3 && isPlayable(currentSong())) {
+      player.seekTo(0, true);
+      return;
+    }
+    goTo(index - 1, started, -1);
+  }
+  function togglePlay() {
+    if (!ready || !list.length) return;
+    const state = player.getPlayerState();
+    if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING) {
+      player.pauseVideo();
+    } else {
+      started = true;
+      player.playVideo();
+    }
+  }
+  function pullMeta() {
+    if (!ready) return;
+    const data = player.getVideoData ? player.getVideoData() : null;
+    const song = currentSong();
+    if (!data || !song || data.video_id !== song.videoId) return;
+    meta = { video_id: data.video_id, title: String(data.title || ''), author: String(data.author || '') };
+    // In curator mode, fill in a blank title from YouTube and keep it in the draft.
+    if (isCurator && !song.title && meta.title) {
+      song.title = meta.title.slice(0, MAX_TITLE);
+      saveDraft();
+      renderEditor();
+    }
+    renderNow();
+    renderList();
+  }
+
+  // ---------- YouTube IFrame Player API ----------
+  function createPlayer() {
+    if (playerCreated || !window.YT || !window.YT.Player) return;
+    playerCreated = true;
+    const song = currentSong();
+    player = new YT.Player('yt', {
+      width: '100%',
+      height: '100%',
+      videoId: song ? song.videoId : undefined,
+      playerVars: { playsinline: 1, rel: 0 },
+      events: { onReady: onReady, onStateChange: onStateChange, onError: onError }
+    });
+  }
+  function onReady() {
+    ready = true;
+    hideNote();
+    renderAll();
+    setInterval(tick, 250);
+    tick();
+  }
+  function onStateChange(e) {
+    const S = YT.PlayerState;
+    switch (e.data) {
+      case S.PLAYING:
+        started = true;
+        errorStreak = 0;
+        hideNote();
+        setPlaying(true);
+        pullMeta();
+        tick();
+        break;
+      case S.PAUSED:
+        setPlaying(false);
+        tick();
+        break;
+      case S.ENDED:
+        setPlaying(false);
+        if (playableCount() > 1) next(true);
+        else { started = false; player.seekTo(0, true); player.pauseVideo(); renderNow(); }
+        break;
+      case S.CUED:
+      case S.BUFFERING:
+        pullMeta();
+        tick();
+        break;
+      default:
+        break;
+    }
+  }
+  function onError(e) {
+    // 2 / 5 / 100 / 101 / 150: invalid ID, HTML5 error, not found, or embedding not allowed.
+    // 153: no Referer header reached YouTube (always the case for file:// pages) - no point skipping songs.
+    const code = e && e.data;
+    setPlaying(false);
+    if (code === 153 && IS_FILE_URL) { showNote(T.fileBlocked); return; }
+    errorStreak += 1;
+    if (!playableCount() || errorStreak >= playableCount()) {
+      showNote(T.allUnavailable);
+      errorStreak = 0;
+      return;
+    }
+    showNote(T.unavailable);
+    setTimeout(() => next(started), 1800);
+  }
+
+  // ---------- curator: parsing pasted input ----------
+  function parseYouTubeInput(raw) {
+    const s = String(raw || '').trim();
+    if (!s) throw new Error('Paste a YouTube link or an 11-character video ID.');
+    if (ID_RE.test(s)) return s;
+
+    let url;
+    try { url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : 'https://' + s); }
+    catch (e) { throw new Error('That is not a valid link or video ID.'); }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('Only http(s) YouTube links are accepted.');
+
+    const host = url.hostname.toLowerCase().replace(/^(www|m|music)\./, '');
+    if (!YT_HOSTS.has(host)) throw new Error('Only YouTube links are accepted.');
+
+    const parts = url.pathname.split('/').filter(Boolean);
+    let id = null;
+    if (host === 'youtu.be') id = parts[0];
+    else if (parts[0] === 'watch' || parts.length === 0) id = url.searchParams.get('v');
+    else if (['embed', 'shorts', 'live', 'v', 'e'].includes(parts[0])) id = parts[1];
+    else id = url.searchParams.get('v');
+
+    if (!id || !ID_RE.test(id)) throw new Error('Could not find a valid 11-character video ID in that link.');
+    return id;
+  }
+
+  function setAddError(msg) { $('addErr').textContent = msg || ''; }
+
+  function addSong(rawUrl, rawTitle) {
+    const id = parseYouTubeInput(rawUrl);
+    if (list.some((s) => s.videoId === id)) throw new Error('That video is already in the playlist (#' + (list.findIndex((s) => s.videoId === id) + 1) + ').');
+    const title = String(rawTitle || '').trim().slice(0, MAX_TITLE);
+    list.push({ title: title, videoId: id });
+    saveDraft();
+    if (playableCount() === 1) goTo(list.length - 1, false);
+    else renderAll();
+  }
+
+  // One line of a pasted list: "Artist - Title", a link, "Title | link", "link Title", or a bare ID.
+  function parseBulkLine(line) {
+    const raw = String(line).trim();
+    if (!raw) return null;
+    const clean = (t) => t.replace(/^[\s\-–—|,;:·]+|[\s\-–—|,;:·]+$/g, '').trim().slice(0, MAX_TITLE);
+
+    if (raw.includes('|')) {
+      const parts = raw.split('|').map((p) => p.trim()).filter(Boolean);
+      for (let k = 0; k < parts.length; k++) {
+        try {
+          const id = parseYouTubeInput(parts[k]);
+          return { title: clean(parts.filter((_, j) => j !== k).join(' ')), videoId: id };
+        } catch (e) { /* this part is not a link */ }
+      }
+    }
+    const tokens = raw.split(/\s+/);
+    for (let k = 0; k < tokens.length; k++) {
+      const tok = tokens[k].replace(/^[<(\[]+|[>)\],.]+$/g, '');
+      const looksLikeLink = /^https?:\/\//i.test(tok) || /^(www\.|m\.|music\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com)\//i.test(tok);
+      const bareId = tokens.length === 1 && ID_RE.test(tok);
+      if (!looksLikeLink && !bareId) continue;
+      try {
+        const id = parseYouTubeInput(tok);
+        return { title: clean(tokens.filter((_, j) => j !== k).join(' ')), videoId: id };
+      } catch (e) {
+        if (looksLikeLink) return { title: clean(raw), videoId: '', bad: true };
+      }
+    }
+    return { title: clean(raw), videoId: '' };
+  }
+
+  function bulkAdd(text) {
+    const before = playableCount();
+    let added = 0, pending = 0, dups = 0, skipped = 0;
+    for (const line of String(text).split(/\r?\n/)) {
+      const entry = parseBulkLine(line);
+      if (!entry) continue;
+      if (entry.bad || (!entry.title && !entry.videoId)) { skipped += 1; continue; }
+      if (entry.videoId) {
+        if (list.some((s) => s.videoId === entry.videoId)) { dups += 1; continue; }
+        list.push({ title: entry.title, videoId: entry.videoId });
+        added += 1;
+      } else {
+        const t = entry.title.toLowerCase();
+        if (list.some((s) => !isPlayable(s) && s.title.toLowerCase() === t)) { dups += 1; continue; }
+        list.push({ title: entry.title, videoId: '' });
+        added += 1;
+        pending += 1;
+      }
+    }
+    saveDraft();
+    const parts = ['Added ' + added + (added === 1 ? ' song' : ' songs')];
+    if (pending) parts.push(pending + ' still ' + (pending === 1 ? 'needs' : 'need') + ' a link');
+    if (dups) parts.push(dups + ' already in the list');
+    if (skipped) parts.push(skipped + ' skipped (not a YouTube link)');
+    $('bulkMsg').textContent = parts.join(' · ') + '.';
+    if (before === 0 && playableCount() > 0) goTo(0, false); else renderAll();
+    return added;
+  }
+  function move(i, delta) {
+    const j = i + delta;
+    if (j < 0 || j >= list.length) return;
+    const tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    if (index === i) index = j;
+    else if (index === j) index = i;
+    saveDraft();
+    renderAll();
+  }
+  function remove(i) {
+    const wasCurrent = i === index;
+    list.splice(i, 1);
+    if (i < index) index -= 1;
+    if (index >= list.length) index = Math.max(0, list.length - 1);
+    saveDraft();
+    if (!list.length) {
+      if (ready) player.stopVideo();
+      started = false;
+      setPlaying(false);
+      resetSeek();
+      meta = null;
+      renderAll();
+      return;
+    }
+    if (wasCurrent) {
+      const playing = ready && player.getPlayerState() === YT.PlayerState.PLAYING;
+      goTo(index, playing);
+    } else {
+      renderAll();
+    }
+  }
+
+  // ---------- curator: export a copy of this file with the playlist baked in ----------
+  function jsString(str) {
+    // JSON is valid JS; additionally escape characters that could end a <script> block or a line.
+    return JSON.stringify(String(str))
+      .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
+      .replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  }
+  function serializePlaylist(songs) {
+    const lines = songs.map((s) => '  { title: ' + jsString(s.title) + ', videoId: ' + jsString(s.videoId) + ' },');
+    return 'const PLAYLIST = [\n' + lines.join('\n') + '\n];';
+  }
+  function exportHtml() {
+    // Marker strings are assembled here so that this code does not itself contain them.
+    const START = '// ==== PLAYLIST ' + 'START ====';
+    const END = '// ==== PLAYLIST ' + 'END ====';
+    const src = SOURCE_SNAPSHOT;
+    const a = src.indexOf(START);
+    const b = a < 0 ? -1 : src.indexOf(END, a + START.length);
+    if (a < 0 || b < 0) { setAddError('Could not find the playlist markers in this file, so nothing was exported.'); return; }
+
+    const songs = sanitizeList(list, false);          // entries without a link cannot be played, so they stay out
+    const left = list.length - songs.length;
+    const out = src.slice(0, a + START.length) + '\n' + serializePlaylist(songs) + '\n' + src.slice(b);
+    const blob = new Blob([out], { type: 'text/html;charset=utf-8' });
+    const href = URL.createObjectURL(blob);
+    const link = el('a', { href: href, download: 'music-player.html' });
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 10000);
+    setAddError('');
+    $('bulkMsg').textContent = 'Exported ' + songs.length + (songs.length === 1 ? ' song' : ' songs')
+      + (left ? '; ' + left + ' without a link ' + (left === 1 ? 'was' : 'were') + ' left out.' : '.');
+  }
+
+  // ---------- mode (#youssef) ----------
+  function applyMode() {
+    const was = isCurator;
+    isCurator = location.hash === CURATOR_HASH;
+    $('curator').hidden = !isCurator;
+    $('curatorBadge').hidden = !isCurator;
+    document.body.classList.toggle('is-curator', isCurator);
+    if (was !== isCurator) {
+      const before = currentSong();
+      list = resolveList();
+      if (index >= list.length) index = Math.max(0, list.length - 1);
+      const after = currentSong();
+      if (ready && (!before || !after || before.videoId !== after.videoId)) {
+        goTo(index, false);
+      } else {
+        renderAll();
+      }
+    }
+  }
+
+  // ---------- wiring ----------
+  function init() {
+    $('brand').textContent = T.brand;
+    $('songsHeading').textContent = T.songs;
+    $('hint').textContent = T.hint;
+    $('footer').textContent = T.footer;
+    document.title = T.brand;
+
+    isCurator = location.hash === CURATOR_HASH;
+    list = resolveList();
+    applyMode();
+    goTo(0, false, 1);
+    window.addEventListener('hashchange', applyMode);
+
+    $('play').addEventListener('click', togglePlay);
+    $('next').addEventListener('click', () => { started = true; next(true); });
+    $('prev').addEventListener('click', () => { started = true; prev(); });
+
+    const seek = $('seek');
+    seek.addEventListener('input', () => {
+      seeking = true;
+      const d = duration();
+      seek.style.setProperty('--p', (Number(seek.value) / 10) + '%');
+      $('elapsed').textContent = fmt(d * Number(seek.value) / 1000);
+    });
+    seek.addEventListener('change', () => {
+      const d = duration();
+      if (ready && d) player.seekTo(d * Number(seek.value) / 1000, true);
+      seeking = false;
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const t = e.target;
+      const tag = t && t.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.key === ' ' && tag !== 'BUTTON') { e.preventDefault(); togglePlay(); }
+      else if (e.key === 'ArrowRight' && ready) { e.preventDefault(); player.seekTo(Math.min(duration(), player.getCurrentTime() + 10), true); }
+      else if (e.key === 'ArrowLeft' && ready) { e.preventDefault(); player.seekTo(Math.max(0, player.getCurrentTime() - 10), true); }
+    });
+
+    $('addForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      try {
+        addSong($('addUrl').value, $('addTitle').value);
+        $('addUrl').value = '';
+        $('addTitle').value = '';
+        setAddError('');
+        $('addUrl').focus();
+      } catch (err) {
+        setAddError(err && err.message ? err.message : 'Could not add that song.');
+      }
+    });
+    $('exportBtn').addEventListener('click', exportHtml);
+    $('bulkAdd').addEventListener('click', () => {
+      if (bulkAdd($('bulkText').value) > 0) $('bulkText').value = '';
+    });
+    $('resetBtn').addEventListener('click', () => {
+      if (!confirm('Discard your draft and go back to the playlist stored in this file?')) return;
+      clearDraft();
+      list = resolveList();
+      index = 0;
+      started = false;
+      setPlaying(false);
+      goTo(0, false);
+    });
+
+    if (IS_FILE_URL) showNote(T.fileBlocked);
+
+    // The YouTube API calls this global once it has loaded.
+    window.onYouTubeIframeAPIReady = createPlayer;
+    if (window.YT && window.YT.Player) createPlayer();
+    setTimeout(() => { if (!ready) showNote(T.offline); }, 12000);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+</body>
+</html>
